@@ -2,6 +2,7 @@ package co.uk.rushorm.core;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -173,6 +174,9 @@ public class RushCore {
     }
 
     public void save(List<? extends Rush> objects) {
+        if(isEmpty(objects)){
+            return;
+        }
         RushQue que = queProvider.blockForNextQue();
         save(objects, que);
     }
@@ -184,6 +188,9 @@ public class RushCore {
     }
 
     public void save(final List<? extends Rush> objects, final RushCallback callback) {
+        if(isEmpty(objects)){
+            return;
+        }
         queProvider.waitForNextQue(new RushQueProvider.RushQueCallback() {
             @Override
             public void callback(RushQue rushQue) {
@@ -196,11 +203,17 @@ public class RushCore {
     }
 
     public void join(List<RushJoin> objects) {
+        if(isEmpty(objects)){
+            return;
+        }
         RushQue que = queProvider.blockForNextQue();
         join(objects, que);
     }
 
     public void join(final List<RushJoin> objects, final RushCallback callback) {
+        if(isEmpty(objects)){
+            return;
+        }
         queProvider.waitForNextQue(new RushQueProvider.RushQueCallback() {
             @Override
             public void callback(RushQue rushQue) {
@@ -213,11 +226,17 @@ public class RushCore {
     }
 
     public void deleteJoin(List<RushJoin> objects) {
+        if(isEmpty(objects)){
+            return;
+        }
         RushQue que = queProvider.blockForNextQue();
         deleteJoin(objects, que);
     }
 
     public void deleteJoin(final List<RushJoin> objects, final RushCallback callback) {
+        if(isEmpty(objects)){
+            return;
+        }
         queProvider.waitForNextQue(new RushQueProvider.RushQueCallback() {
             @Override
             public void callback(RushQue rushQue) {
@@ -501,6 +520,7 @@ public class RushCore {
 
     private static final int SAVE_GROUP_SIZE = 1000;
     private void save(List<? extends Rush> objects, final RushQue que) {
+
         for (int i = 0; i < Math.ceil(objects.size() / ((float)SAVE_GROUP_SIZE)); i ++) {
 
             int start = i * SAVE_GROUP_SIZE;
@@ -537,6 +557,9 @@ public class RushCore {
     }
 
     private List<RushConflict> saveOnlyWithoutConflict(List<? extends Rush> objects, final RushQue que) {
+        if(isEmpty(objects)){
+           throw  new IllegalArgumentException("List is null or empty!");
+        }
         final List<RushConflict> conflicts = new ArrayList<>();
         statementRunner.startTransition(que);
         rushConflictSaveStatementGenerator.conflictsFromGenerateSaveOrUpdate(objects, annotationCache, rushStringSanitizer, rushColumns, new RushConflictSaveStatementGenerator.Callback() {
@@ -579,6 +602,9 @@ public class RushCore {
     }
 
     private void delete(List<? extends Rush> objects, final RushQue que) {
+        if(isEmpty(objects)){
+            return;
+        }
         statementRunner.startTransition(que);
         deleteStatementGenerator.generateDelete(objects, annotationCache, new RushDeleteStatementGenerator.Callback() {
 
@@ -630,6 +656,9 @@ public class RushCore {
     }
 
     private void join(List<RushJoin> objects, final RushQue que) {
+        if(isEmpty(objects)){
+            return;
+        }
         statementRunner.startTransition(que);
         rushJoinStatementGenerator.createJoins(objects, new RushJoinStatementGenerator.Callback() {
             @Override
@@ -643,6 +672,9 @@ public class RushCore {
     }
 
     private void deleteJoin(List<RushJoin> objects, final RushQue que) {
+        if(isEmpty(objects)){
+            return;
+        }
         statementRunner.startTransition(que);
         rushJoinStatementGenerator.deleteJoins(objects, new RushJoinStatementGenerator.Callback() {
             @Override
@@ -654,4 +686,15 @@ public class RushCore {
         statementRunner.endTransition(que);
         queProvider.queComplete(que);
     }
+
+    /**
+     * checks if the collection is null or empty and returns true if it is.
+     * @param collection
+     * @return
+     */
+    private  boolean isEmpty(Collection collection) {//I hesitated to use  Apache Collections library or creating a util class with static method for this method
+         logger.log("Collection is null or empty, no action performed.");
+         return collection == null || collection.isEmpty();
+        }
 }
+
